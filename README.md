@@ -1,4 +1,7 @@
 # Flappy Bird AI
+![изображение](https://user-images.githubusercontent.com/87701031/234112803-6502a64e-52f9-4f47-8666-0dcb11a6e91d.png)
+
+
 AI learns to play Flappy Bird. And then actually plays it!
 
 **Neural Network structure:**
