@@ -1,6 +1,7 @@
 from pygame import *
 import random
 import numpy as np
+from typing import Literal
 
 #https://flappybird-ai.netlify.app/
 
@@ -18,6 +19,7 @@ clock = time.Clock()
 class FlappyBirdGame():
     def __init__(self) -> None:
         self.gaming = True
+        self.tracker = Tracker(parent=self)
 
         self.COLUMN_MOVESPEED = 10
         self.SPAWN_COLUMN_COOLDOWN = 45
@@ -25,7 +27,6 @@ class FlappyBirdGame():
         self.columnSegmentsGroup = sprite.Group()
 
         self.birds:list[FlappyBird] = list()
-        self.startGame()
 
     def startGame(self):
         self.finish = False
@@ -116,7 +117,7 @@ class FlappyBird(GameSprite):
         self.score = 0
 
         if isAi:
-            self.ai = FlappyBirdAi(self)
+            self.ai = FlappyBirdAi(self, noise_order='invscale')
 
     def renderScore(self):
         self.scoreText = font.Font(None, 24).render(
@@ -151,16 +152,23 @@ class FlappyBird(GameSprite):
                 self.velocity = -2.5
 
 class FlappyBirdAi():
-    def __init__(self, parent:FlappyBird, noise_order=0.04) -> None:
+    def __init__(self, parent:FlappyBird, noise_order:float|Literal['invscale']=0.05) -> None:
+        '''
+        Noise amplitude can be either fixed or inversely scaled from the previous generation's best score.
+
+        The higher the score, the smaller the amplitude (25% amplitude for best score of 100, 12.5% for 200 etc.).'''
         self.parent = parent
 
         try:
+            if noise_order == 'invscale':
+                noise_order = 25 / game.tracker.bestScore
+            
             # generate noise
             noise1 = 1 + noise_order * (np.random.rand(4, 7) * 2 - 1)
             noise2 = 1 + noise_order * (np.random.rand(7, 2) * 2 - 1)
 
-            self.w1 = tk.bestW1 * noise1
-            self.w2 = tk.bestW2 * noise2
+            self.w1 = game.tracker.bestW1 * noise1
+            self.w2 = game.tracker.bestW2 * noise2
         except:
             self.w1 = np.random.rand(4, 7)
             self.w2 = np.random.rand(7, 2)
@@ -194,7 +202,7 @@ class FlappyBirdAi():
         return False
 
 game = FlappyBirdGame()
-tk = Tracker(game)
+game.startGame()
 
 while game.gaming:
     for e in event.get():
@@ -228,12 +236,12 @@ while game.gaming:
                 False
             ):
                 game.birds.remove(bird)
-                if bird.score >= tk.bestScore:
-                    tk.updateWeights(bird.ai.w1, bird.ai.w2)
-                    tk.bestScore = bird.score
+                if bird.score >= game.tracker.bestScore:
+                    game.tracker.updateWeights(bird.ai.w1, bird.ai.w2)
+                    game.tracker.bestScore = bird.score
 
         win.blit(font.Font(None, 24).render(
-            'generation: ' + str(tk.generations),
+            'generation: ' + str(game.tracker.generations),
             True,
             (0, 0, 0)
             ),
@@ -249,7 +257,7 @@ while game.gaming:
         )
 
         win.blit(font.Font(None, 24).render(
-            'best score: ' + str(tk.bestScore),
+            'best score: ' + str(game.tracker.bestScore),
             True,
             (0, 0, 0)
             ),
@@ -257,21 +265,14 @@ while game.gaming:
         )
 
         if len(game.birds) == 0:
-            print(f'************* GENERATION {tk.generations} *************')
-            print("Generation's best score:", tk.bestScore)
-            print("Generation's best weights:\n", tk.bestW1.reshape((1, 28)), '\n', tk.bestW2.reshape((1, 14)), '\n')
-            tk.generations += 1
-            tk.bestScore = 0
-
-            '''win.blit(game.loseNotice, (125, 175))
-            if key.get_pressed()[K_r]:
-                game.startGame()
-
-            game.autoRestartTimer -= 1
-            if game.autoRestartTimer <= 0:
-                game.startGame()'''
+            print(f'************* GENERATION {game.tracker.generations} *************')
+            print("Generation's best score:", game.tracker.bestScore)
+            print("Next generation starts with weights noisified by " + str(round(2500 / game.tracker.bestScore, 2)) + '%:')
+            print("Generation's best weights:\n", game.tracker.bestW1.reshape((1, 28)), '\n', game.tracker.bestW2.reshape((1, 14)), '\n')
+            game.tracker.generations += 1
             
             game.startGame()
+            game.tracker.bestScore = 0
 
     display.update()
     clock.tick(30)
