@@ -45,6 +45,13 @@ class Tracker:
     def __init__(self, parent:FlappyBirdGame) -> None:
         self.parent = parent
         self.generations = 0
+
+        #! generation parameters
+        self.bestGenerationScore = 0
+        self.bestGenerationW1 = None
+        self.bestGenerationW2 = None
+
+        #! overall parameters
         self.bestScore = 0
         self.bestW1 = None
         self.bestW2 = None
@@ -52,6 +59,10 @@ class Tracker:
     def updateWeights(self, w1, w2):
         self.bestW1:np.ndarray = w1
         self.bestW2:np.ndarray = w2
+
+    def updateGenerationWeights(self, w1, w2):
+        self.bestGenerationW1:np.ndarray = w1
+        self.bestGenerationW2:np.ndarray = w2
 
 
 class GameSprite(sprite.Sprite):
@@ -139,36 +150,36 @@ class FlappyBird(GameSprite):
                     nextColumn = c
                     break
 
-            j = self.ai.calculateJumpOutput(
+            if self.ai.calculateJumpOutput(
                 y=self.rect.y,
                 vlc=self.velocity,
                 dist=nextColumn.x - self.rect.x,
                 y_gap=nextColumn.gap,
-                )
-            if j:
+                ):
                 self.velocity = -2.5
         except AttributeError:  # non-ai bird
             if key.get_pressed()[K_SPACE]:
                 self.velocity = -2.5
 
 class FlappyBirdAi():
-    def __init__(self, parent:FlappyBird, noise_order:float|Literal['invscale']=0.05) -> None:
+    def __init__(self, parent:FlappyBird, noise_order:float|Literal['invscale']=0.05, damping:float=0.7) -> None:
         '''
-        Noise amplitude can be either fixed or inversely scaled from the previous generation's best score.
-
-        The higher the score, the smaller the amplitude (25% amplitude for best score of 100, 12.5% for 200 etc.).'''
+        Parameters:\n
+        `noise_order` - Noise amplitude can be either fixed or inversely scaled from the previous generation's best score. The higher the score, the smaller the amplitude (25% amplitude for best score of 100, 12.5% for 200 etc.).\n
+        `damping` - Determines the ratio in which OVERALL and GENERATION'S best weights are used for the next generation to learn. By default, it is a 70% preference towards overall best weights.
+        '''
         self.parent = parent
 
         try:
             if noise_order == 'invscale':
-                noise_order = 25 / game.tracker.bestScore
+                noise_order = 25 / game.tracker.bestGenerationScore
             
             # generate noise
             noise1 = 1 + noise_order * (np.random.rand(4, 7) * 2 - 1)
             noise2 = 1 + noise_order * (np.random.rand(7, 2) * 2 - 1)
 
-            self.w1 = game.tracker.bestW1 * noise1
-            self.w2 = game.tracker.bestW2 * noise2
+            self.w1 = (damping * game.tracker.bestW1 + (1 - damping) * game.tracker.bestGenerationW1) * noise1
+            self.w2 = (damping * game.tracker.bestW2 + (1 - damping) * game.tracker.bestGenerationW2) * noise2
         except:
             self.w1 = np.random.rand(4, 7)
             self.w2 = np.random.rand(7, 2)
@@ -236,6 +247,10 @@ while game.gaming:
                 False
             ):
                 game.birds.remove(bird)
+                if bird.score >= game.tracker.bestGenerationScore:
+                    game.tracker.updateGenerationWeights(bird.ai.w1, bird.ai.w2)
+                    game.tracker.bestGenerationScore = bird.score
+
                 if bird.score >= game.tracker.bestScore:
                     game.tracker.updateWeights(bird.ai.w1, bird.ai.w2)
                     game.tracker.bestScore = bird.score
@@ -257,22 +272,31 @@ while game.gaming:
         )
 
         win.blit(font.Font(None, 24).render(
-            'best score: ' + str(game.tracker.bestScore),
+            'best gen. score: ' + str(game.tracker.bestGenerationScore),
             True,
             (0, 0, 0)
             ),
             (0, 40)
         )
 
+        win.blit(font.Font(None, 24).render(
+            'best score: ' + str(game.tracker.bestScore),
+            True,
+            (0, 0, 0)
+            ),
+            (0, 60)
+        )
+
         if len(game.birds) == 0:
             print(f'************* GENERATION {game.tracker.generations} *************')
-            print("Generation's best score:", game.tracker.bestScore)
-            print("Next generation starts with weights noisified by " + str(round(2500 / game.tracker.bestScore, 2)) + '%:')
-            print("Generation's best weights:\n", game.tracker.bestW1.reshape((1, 28)), '\n', game.tracker.bestW2.reshape((1, 14)), '\n')
+            print("Generation's best score:", game.tracker.bestGenerationScore)
+            print("Overall best score:", game.tracker.bestScore)
+            print("Next generation starts with weights noisified by " + str(round(2500 / game.tracker.bestGenerationScore, 2)) + '%:')
+            print("Generation's best weights:\n", game.tracker.bestGenerationW1.reshape((1, 28)), '\n', game.tracker.bestGenerationW2.reshape((1, 14)), '\n')
             game.tracker.generations += 1
             
             game.startGame()
-            game.tracker.bestScore = 0
+            game.tracker.bestGenerationScore = 0
 
     display.update()
     clock.tick(30)
