@@ -17,6 +17,8 @@ gap coordinates in the next column                /
 
 50 birds per generation; best-performing bird passes its weights to the next generation with noise applied. Amplitude of the noise can be defined by the `noise_order` argument of `FlappyBirdAi` class. By default it is 0.05, which means weights are multiplied by a random float in range [0.95, 1.05].
 
+Watch the demo of this project here - https://www.youtube.com/watch?v=8K0HLsQlLJ0
+
 *P.S. Images used in this game AREN'T MINE, I took them from the Internet.*
 
 *P.S.S. thanks to https://flappybird-ai.netlify.app/ for providing a general idea on how to implement the learning algorithm!*
@@ -37,6 +39,8 @@ gap coordinates in the next column                /
 **Обучение:**
 
 50 птичек на каждое поколение; веса птички с лучшим результатом используются следующим поколением, с наложенным шумом. Амплитуда шума может быть настроена с помощью параметра `noise_order` класса `FlappyBirdAi`. По умолчанию - 0.05, т.е. веса умножаются на случайную десятичную дробь в диапазоне [0.95, 1.05].
+
+Здесь можно посмотреть демонстрацию работы проекта - https://www.youtube.com/watch?v=8K0HLsQlLJ0
 
 *P.S. Картинки, используемые в игре, НЕ МОИ. Я взял их из Интернета.*
 
