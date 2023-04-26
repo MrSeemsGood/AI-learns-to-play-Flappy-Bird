@@ -2,6 +2,7 @@ from pygame import *
 import random
 import numpy as np
 from typing import Literal
+import pickle
 
 #https://flappybird-ai.netlify.app/
 
@@ -14,7 +15,6 @@ win = display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 display.set_caption('AI tries to learn Flappy Bird')
 win.fill((0, 192, 255))
 clock = time.Clock()
-
 
 class FlappyBirdGame():
     def __init__(self) -> None:
@@ -192,7 +192,7 @@ class FlappyBirdAi():
             `dist` - distance (along the x axis) to the next column;\n
             `y_gap : list[y_gap_top, y_gap_bottom]` - gap's y coordinates at the next column.\n
         Output:
-            If the Bird jumps or not.
+            If the bird jumps or not.
         '''
 
         # normalize the values to 0-1 range
@@ -253,6 +253,9 @@ while game.gaming:
 
                 if bird.score >= game.tracker.bestScore:
                     game.tracker.updateWeights(bird.ai.w1, bird.ai.w2)
+                    with open('best_weights.dat', 'wb+') as bpickle:
+                        pickle.dump(bird.ai.w1, bpickle)
+                        pickle.dump(bird.ai.w2, bpickle)
                     game.tracker.bestScore = bird.score
 
         win.blit(font.Font(None, 24).render(
@@ -291,8 +294,7 @@ while game.gaming:
             print(f'************* GENERATION {game.tracker.generations} *************')
             print("Generation's best score:", game.tracker.bestGenerationScore)
             print("Overall best score:", game.tracker.bestScore)
-            print("Next generation starts with weights noisified by " + str(round(2500 / game.tracker.bestGenerationScore, 2)) + '%:')
-            print("Generation's best weights:\n", game.tracker.bestGenerationW1.reshape((1, 28)), '\n', game.tracker.bestGenerationW2.reshape((1, 14)), '\n')
+            print("Weights succesfully pickled! Next generation starts with weights noisified by " + str(round(2500 / game.tracker.bestGenerationScore, 2)) + '%.\n')
             game.tracker.generations += 1
             
             game.startGame()
