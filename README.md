@@ -15,7 +15,7 @@ gap coordinates in the next column                /
 
 **Learning:**
 
-50 birds per generation; best-performing bird passes its weights to the next generation with noise applied. Amplitude of the noise can be defined by the `noise_order` argument of `FlappyBirdAi` class. By default it is 0.04, which means weights are multiplied by a random float in range [0.96, 1.04].
+50 birds per generation; best-performing bird passes its weights to the next generation with noise applied. Amplitude of the noise can be defined by the `noise_order` argument of `FlappyBirdAi` class. By default it is 0.05, which means weights are multiplied by a random float in range [0.95, 1.05].
 
 *P.S. Images used in this game AREN'T MINE, I took them from the Internet.*
 
@@ -36,7 +36,7 @@ gap coordinates in the next column                /
 
 **Обучение:**
 
-50 птичек на каждое поколение; веса птички с лучшим результатом используются следующим поколением, с наложенным шумом. Амплитуда шума может быть настроена с помощью параметра `noise_order` класса `FlappyBirdAi`. По умолчанию - 0.04, т.е. веса умножаются на случайную десятичную дробь в диапазоне [0.96, 1.04].
+50 птичек на каждое поколение; веса птички с лучшим результатом используются следующим поколением, с наложенным шумом. Амплитуда шума может быть настроена с помощью параметра `noise_order` класса `FlappyBirdAi`. По умолчанию - 0.05, т.е. веса умножаются на случайную десятичную дробь в диапазоне [0.95, 1.05].
 
 *P.S. Картинки, используемые в игре, НЕ МОИ. Я взял их из Интернета.*
 
